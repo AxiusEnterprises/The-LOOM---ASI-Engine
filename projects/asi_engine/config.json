@@ -1,0 +1,7 @@
+{
+  "name": "asi_engine",
+  "version": "0.1.0",
+  "description": "Reasoning and inference module for the LOOM ASI Engine",
+  "entry": "main.py",
+  "dependencies": ["loom_core"]
+}
