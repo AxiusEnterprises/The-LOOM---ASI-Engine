@@ -92,7 +92,7 @@
 </div>
 
 <script type="module">
-import createGlobe from 'https://esm.sh/cobe';
+import createGlobe from 'https://esm.sh/cobe@2';
 
 const canvas = document.getElementById('cobe');
 
@@ -146,6 +146,10 @@ window.addEventListener('pointermove', (e) => {
   if (pointerDown !== null) dragPhi = (e.clientX - pointerDown) / 200;
 });
 window.addEventListener('pointerup', () => {
+  pointerDown = null;
+  canvas.classList.remove('grabbing');
+});
+window.addEventListener('pointercancel', () => {
   pointerDown = null;
   canvas.classList.remove('grabbing');
 });
