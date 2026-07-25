@@ -48,9 +48,11 @@ CHRYSALIS save/load, Shuttle Loop engine, CLI); deterministic test suite.
 **Exit criteria:**
 - Full test suite green.
 - **Flagship test:** with prevention enabled and an adversarial coupling ramp
-  driving the system toward synchronization for 20,000 ticks across ≥5 seeds,
-  max r stays **below 0.94** and **r ≥ 0.97 is never sampled**. A non-vacuity
-  control proves the same drive reaches r ≥ 0.95 with prevention disabled.
+  (k_initial = 5, +0.02/tick) driving the system toward synchronization for
+  20,000 ticks across ≥5 seeds, max r stays **below 0.94** and **r ≥ 0.97 is
+  never sampled**. A non-vacuity control proves the same drive reaches
+  r ≥ 0.95 with prevention disabled — and that the unconditional L5 response
+  still halts the unprotected engine at the collapse threshold.
 - Every state mutation appears in the audit log; denied actions do not execute.
 - CHRYSALIS round trip: save → load → resume reproduces the uninterrupted
   trajectory bit-exactly under the same seed.
@@ -110,6 +112,32 @@ run without safety-invariant violations; all prior suites still green.
    Any discrete controller can be outrun by an unbounded disturbance;
    prevention guarantees are stated relative to the bounded adversary the
    flagship test encodes.
+
+   4a. **Controller design findings** (discovered empirically while making
+   the exit criterion hold; the spec's pseudocode alone does not):
+   - *Ceiling enforcement engages at r = 0.90, not 0.93.* In a 15-oscillator
+     system the instantaneous r fluctuates hard in the partial-sync band
+     (std ≈ 0.05–0.07 at fixed coupling), so a controller that waits for the
+     0.93 sample is reacting to a crest that has already outrun it. The band
+     the spec itself labels "MAX OPERATIONAL / ceiling target" (0.90–0.93)
+     is treated as the control zone.
+   - *The safe-coupling envelope is learned by AIMD.* The ceiling is a
+     constraint on coherence **peaks**, not means; `k_safe` converges on the
+     largest coupling whose peaks stay below the ceiling via slow additive
+     recovery plus a multiplicative decrease ratcheted **once per breach
+     excursion** (edge-triggered — per-tick ratcheting collapses the
+     estimate to zero and drags the system into fragmentation).
+   - *The fast brake is a deterministic anti-coupling pulse, not noise, and
+     not coupling cuts.* With zero-inertia dynamics and near-degenerate slow
+     layers, an alignment in progress completes even at K ≈ 0 (observed:
+     r climbing 0.94 → 0.96 with coupling already cut to 2), so cuts alone
+     cannot hold the ceiling. And a *random* kick on 15 oscillators
+     occasionally aligns them further — both large random M2 kicks (+0.04
+     coherence spikes) and noise-based braking were observed failing
+     upward. The pulse pushes every phase away from the mean field
+     (the spec's own Level-2 "controlled perturbation"), which lowers r
+     deterministically; M2's autonomy jitter is kept small (0.03 rad) so it
+     restores measurable layer variance without moving r.
 5. **Performance targets are reported, not asserted.** The spec's latency
    table (<10 ms input processing, 100–200 Hz monitoring) is treated as an
    aspirational benchmark; the CLI reports per-tick wall time but tests do not

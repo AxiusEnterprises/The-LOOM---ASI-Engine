@@ -36,13 +36,13 @@ Run a simulation with an adversarial coupling ramp and watch the coherence
 engine hold the ceiling:
 
 ```sh
-python -m loom run --ticks 5000 --ramp 0.001 --seed 42
+python -m loom run --ticks 20000 --k 5 --ramp 0.02 --seed 42
 ```
 
 Save state, resume from it, and verify integrity:
 
 ```sh
-python -m loom run --ticks 2000 --seed 7 --out state.json
+python -m loom run --ticks 2000 --k 8 --seed 7 --out state.json
 python -m loom resume --state state.json --ticks 1000
 python -m loom attest --state state.json
 ```
