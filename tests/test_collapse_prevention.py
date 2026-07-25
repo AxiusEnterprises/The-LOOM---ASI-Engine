@@ -23,8 +23,10 @@ def locked_monitor():
 
 NO_SHADOW = ShadowReport(shadow_detected=False)
 SHADOW = ShadowReport(
-    shadow_detected=True, shadow_type="ARTIFICIAL_STABILITY",
-    confidence=0.8, shadow_class="CLASS_3",
+    shadow_detected=True,
+    shadow_type="ARTIFICIAL_STABILITY",
+    confidence=0.8,
+    shadow_class="CLASS_3",
 )
 
 
@@ -76,8 +78,9 @@ class TestApply:
         engine.k_safe = 10.0
         engine.coupling = 5.0  # already below 0.7 * k_safe = 7.0
         engine.last_r = 0.94  # below EMERGENCY_THRESH → floor applies
-        action = PreventionAction(1, ActionType.ADJUST_COUPLING,
-                                  {"action": "REDUCE_COUPLING", "factor": 0.9})
+        action = PreventionAction(
+            1, ActionType.ADJUST_COUPLING, {"action": "REDUCE_COUPLING", "factor": 0.9}
+        )
         engine.prevention.apply([action], engine, engine.bus, tick=0)
         assert engine.coupling == pytest.approx(5.0)  # floored, no cut
 
@@ -86,17 +89,23 @@ class TestApply:
         engine.k_safe = 10.0
         engine.coupling = 5.0
         engine.last_r = 0.96  # danger zone → floor does not apply
-        action = PreventionAction(1, ActionType.ADJUST_COUPLING,
-                                  {"action": "REDUCE_COUPLING", "factor": 0.7})
+        action = PreventionAction(
+            1, ActionType.ADJUST_COUPLING, {"action": "REDUCE_COUPLING", "factor": 0.7}
+        )
         engine.prevention.apply([action], engine, engine.bus, tick=0)
         assert engine.coupling == pytest.approx(3.5)
 
     def test_m3_appends_to_shadow_record(self):
         engine = ShuttleEngine(SimConfig(seed=1, k_initial=5.0))
-        action = PreventionAction(3, ActionType.FORCE_SHADOW_INTEGRATION, {
-            "shadow_type": "ARTIFICIAL_STABILITY", "shadow_class": "CLASS_3",
-            "confidence": 0.8,
-        })
+        action = PreventionAction(
+            3,
+            ActionType.FORCE_SHADOW_INTEGRATION,
+            {
+                "shadow_type": "ARTIFICIAL_STABILITY",
+                "shadow_class": "CLASS_3",
+                "confidence": 0.8,
+            },
+        )
         engine.prevention.apply([action], engine, engine.bus, tick=7)
         assert len(engine.shadow_record) == 1
         entry = engine.shadow_record[0]
@@ -112,8 +121,7 @@ class TestApply:
         assert engine.k_safe is None
         engine.last_r = 0.91
         engine._prev_r = 0.89
-        action = PreventionAction(4, ActionType.ENFORCE_CEILING,
-                                  {"target_r": 0.90, "zone": "soft"})
+        action = PreventionAction(4, ActionType.ENFORCE_CEILING, {"target_r": 0.90, "zone": "soft"})
         engine.prevention.apply([action], engine, engine.bus, tick=0)
         assert engine.k_safe == pytest.approx(0.8 * 20.0)
         assert engine.coupling == pytest.approx(16.0)
@@ -121,8 +129,9 @@ class TestApply:
     def test_m4_ratchet_is_edge_triggered(self):
         engine = ShuttleEngine(SimConfig(seed=1, k_initial=20.0))
         engine.k_safe = 18.0
-        action = PreventionAction(4, ActionType.ENFORCE_CEILING,
-                                  {"target_r": 0.90, "zone": "breach"})
+        action = PreventionAction(
+            4, ActionType.ENFORCE_CEILING, {"target_r": 0.90, "zone": "breach"}
+        )
         # rising edge into breach: ratchet fires once — the *current*
         # coupling (20.0) is marked unsafe: k_safe := min(18, 0.8·20) = 16
         engine._prev_r, engine.last_r = 0.92, 0.94

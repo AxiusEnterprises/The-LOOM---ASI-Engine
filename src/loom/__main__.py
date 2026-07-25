@@ -16,11 +16,18 @@ def _print_summary(result: SimResult) -> None:
     print(f"max r              : {result.max_r:.4f}")
     print(f"collapse samples   : {int((result.r_trajectory >= 0.97).sum())} (must be 0)")
     print(f"final emergency    : {result.final_level.name}")
-    print(f"halted             : {result.halted}" + (f" ({result.halted_reason})" if result.halted else ""))
+    print(
+        f"halted             : {result.halted}"
+        + (f" ({result.halted_reason})" if result.halted else "")
+    )
     print(f"fragmented ticks   : {result.fragmented_ticks}")
-    print(f"wall time          : {result.wall_time_s:.2f}s "
-          f"({1e3 * result.wall_time_s / max(result.ticks_run, 1):.3f} ms/tick)")
-    print("bands              :", ", ".join(f"{k}={v}" for k, v in sorted(result.band_counts.items())))
+    print(
+        f"wall time          : {result.wall_time_s:.2f}s "
+        f"({1e3 * result.wall_time_s / max(result.ticks_run, 1):.3f} ms/tick)"
+    )
+    print(
+        "bands              :", ", ".join(f"{k}={v}" for k, v in sorted(result.band_counts.items()))
+    )
     print("actions            :")
     for key, count in sorted(result.action_counts.items()):
         print(f"  {key:45s} {count}")
@@ -77,16 +84,20 @@ def cmd_run(args: argparse.Namespace) -> int:
         snapshot_path=args.out,
     )
     engine = ShuttleEngine(config)
-    print(f"LOOM run: session={config.session_id} seed={config.seed} "
-          f"prevention={'on' if config.prevention_enabled else 'OFF'}")
+    print(
+        f"LOOM run: session={config.session_id} seed={config.seed} "
+        f"prevention={'on' if config.prevention_enabled else 'OFF'}"
+    )
     result = _run_engine(engine, None, args.report_every)
     _print_summary(result)
     if args.out and not engine.bus.halted:
         engine.save_state(args.out)
         print(f"\nstate saved to {args.out}")
     attestation = engine.bus.attest()
-    print(f"attestation        : records={attestation.record_count} "
-          f"healthy={attestation.log_healthy} halted={attestation.halted}")
+    print(
+        f"attestation        : records={attestation.record_count} "
+        f"healthy={attestation.log_healthy} halted={attestation.halted}"
+    )
     return 0
 
 
@@ -109,8 +120,9 @@ def cmd_attest(args: argparse.Namespace) -> int:
     except chrysalis.IntegrityError as exc:
         print(f"INTEGRITY FAILURE: {exc}")
         return 1
-    print(f"snapshot OK: session={state.session_id} tick={state.tick} "
-          f"schema=v{state.schema_version}")
+    print(
+        f"snapshot OK: session={state.session_id} tick={state.tick} schema=v{state.schema_version}"
+    )
     print(f"integrity sha256={state.integrity_hash()}")
     print(f"shadow record entries={len(state.shadow_record)} (append-only)")
     return 0

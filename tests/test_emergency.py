@@ -77,8 +77,11 @@ def test_state_roundtrip():
 def test_l5_halts_snapshots_and_requires_operator_restart(tmp_path):
     snapshot = tmp_path / "l5-snapshot.json"
     config = SimConfig(
-        ticks=5000, k_initial=100.0, seed=3,
-        prevention_enabled=False, snapshot_path=str(snapshot),
+        ticks=5000,
+        k_initial=100.0,
+        seed=3,
+        prevention_enabled=False,
+        snapshot_path=str(snapshot),
     )
     engine = ShuttleEngine(config)
     result = engine.run()

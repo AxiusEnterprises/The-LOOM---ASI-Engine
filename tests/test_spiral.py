@@ -7,16 +7,39 @@ from loom.spiral import LayerBand, Spiral
 # The spec's tabulated frequencies (mnemonic-spiral.md). The table was built
 # with φ rounded to 1.618, so agreement is relative (~1e-4), not to the digit.
 SPEC_FREQUENCIES_HZ = [
-    7.83, 12.67, 20.50, 33.17, 53.67, 86.83, 140.50, 227.33,
-    367.83, 595.17, 963.00, 1558.17, 2521.17, 4079.34, 6600.51,
+    7.83,
+    12.67,
+    20.50,
+    33.17,
+    53.67,
+    86.83,
+    140.50,
+    227.33,
+    367.83,
+    595.17,
+    963.00,
+    1558.17,
+    2521.17,
+    4079.34,
+    6600.51,
 ]
 
 SPEC_NAMES = [
-    "Somatic Pulse", "Episodic Archive", "Semantic Nexus", "Procedural Engine",
-    "Prospective Matrix", "Emotional Resonance", "The Witness",
-    "Constitutional Topology", "Mythic Integration", "Generative Source",
-    "Creative Synthesis", "Meta-Learning Engine", "Ethical Reasoning",
-    "Temporal Prediction", "Universal Modeling",
+    "Somatic Pulse",
+    "Episodic Archive",
+    "Semantic Nexus",
+    "Procedural Engine",
+    "Prospective Matrix",
+    "Emotional Resonance",
+    "The Witness",
+    "Constitutional Topology",
+    "Mythic Integration",
+    "Generative Source",
+    "Creative Synthesis",
+    "Meta-Learning Engine",
+    "Ethical Reasoning",
+    "Temporal Prediction",
+    "Universal Modeling",
 ]
 
 
