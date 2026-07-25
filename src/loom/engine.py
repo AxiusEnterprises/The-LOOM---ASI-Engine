@@ -38,6 +38,7 @@ from .coherence import (
 )
 from .collapse_prevention import CollapsePreventionSystem
 from .constants import COLLAPSE_THRESH
+from .crystallize import CrystallizationPipeline
 from .emergency import EmergencyLevel, EmergencyProtocol
 from .oversight import ActionRequest, ActionType, OversightBus
 from .shadows import CSMShadowDetector, ShadowDetector
@@ -56,6 +57,7 @@ class SimConfig:
     prevention_enabled: bool = True
     history_window: int = 64
     perturbation_std: float = 0.03
+    crystallize_every: int = 0  # MCL window in ticks; 0 disables crystallization
     snapshot_path: str | None = None  # L5 emergency snapshot destination
     session_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
 
@@ -101,11 +103,15 @@ class ShuttleEngine:
         self.rng = np.random.default_rng(config.seed)
         self.spiral = Spiral(rng=self.rng, frequency_mode=config.frequency_mode)  # type: ignore[arg-type]
         self.coupling: float = config.k_initial
-        self.k_safe: float | None = None  # adaptive safe-coupling estimate (M4); calibrates on first ceiling contact
+        self.k_safe: float | None = (
+            None  # adaptive safe-coupling estimate (M4); calibrates on first ceiling contact
+        )
         self.tick_index: int = 0
         self.last_r: float = 0.0
         self._prev_r: float = 0.0
         self.shadow_record: list[dict[str, Any]] = []  # append-only, never truncated
+        self.crystals: list[dict[str, Any]] = []  # MCL crystallization records
+        self.mcl = CrystallizationPipeline() if config.crystallize_every > 0 else None
 
     # --- gated mutators (called only via bus.execute) -----------------------
 
@@ -281,6 +287,25 @@ class ShuttleEngine:
                 tick=self.tick_index,
             )
 
+        # MCL crystallization: every crystallize_every ticks, the window is
+        # crystallized through the full 8-step protocol (all five shadow
+        # instruments gate it), and the record joins the session's memory.
+        if (
+            self.mcl is not None
+            and not self.bus.halted
+            and (self.tick_index + 1) % self.config.crystallize_every == 0
+        ):
+            request = ActionRequest(
+                tick=self.tick_index,
+                actor="mcl",
+                action_type=ActionType.CRYSTALLIZE,
+                params={"window": self.config.crystallize_every},
+            )
+            self.bus.execute(
+                request,
+                lambda: self.crystals.append(self.mcl.run(self, self.tick_index).to_dict()),
+            )
+
         # 5. Advance.
         self.tick_index += 1
         return not self.bus.halted
@@ -338,6 +363,7 @@ class ShuttleEngine:
             emergency_state=self.emergency.state(),
             shadow_record=list(self.shadow_record),
             config=self.config.to_dict(),
+            crystal_records=list(self.crystals),
         )
 
     def save_state(self, path: str) -> None:
@@ -367,6 +393,7 @@ class ShuttleEngine:
         engine.monitor = CoherenceMonitor.restore(state.monitor_state)
         engine.emergency = EmergencyProtocol.restore(state.emergency_state)
         engine.shadow_record = list(state.shadow_record)
+        engine.crystals = list(state.crystal_records)
         engine.last_r = continuity.applied_baseline_r
 
         if not continuity.restored_within_tolerance:

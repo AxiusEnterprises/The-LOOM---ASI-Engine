@@ -34,7 +34,7 @@ from typing import Any
 from .constants import MAX_SUSTAINED
 from .oversight import ActionRequest, ActionType, Decision, OversightBus
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 #: temporal-binding.md: coherence baseline restores within ±0.05, else start
 #: from the fallback posture and log it as an open vector.
@@ -59,6 +59,7 @@ class SessionStateVector:
     emergency_state: dict[str, Any]
     shadow_record: list[dict[str, Any]]  # append-only, never truncated
     config: dict[str, Any]
+    crystal_records: list[dict[str, Any]] = field(default_factory=list)  # v2: MCL memory highlights
     schema_version: int = SCHEMA_VERSION
     created_at: float = field(default_factory=time.time)
 
@@ -88,12 +89,20 @@ def save(state: SessionStateVector, path: str | Path, bus: OversightBus) -> Deci
 
 
 def load(path: str | Path) -> SessionStateVector:
-    """Read and integrity-check a state vector."""
+    """Read and integrity-check a state vector.
+
+    The hash is verified over the *raw stored payload*, not a re-serialized
+    dataclass — so a v1 file (without ``crystal_records``) still verifies,
+    and new-schema loaders never invalidate old snapshots. Missing v2 fields
+    fill with their defaults after verification.
+    """
     document = json.loads(Path(path).read_text())
-    state = SessionStateVector(**document["payload"])
-    if state.integrity_hash() != document.get("integrity"):
+    payload = document["payload"]
+    canonical = json.dumps(payload, sort_keys=True)
+    digest = hashlib.sha256(canonical.encode()).hexdigest()
+    if digest != document.get("integrity"):
         raise IntegrityError(f"integrity hash mismatch for {path}")
-    return state
+    return SessionStateVector(**payload)
 
 
 @dataclass(frozen=True)

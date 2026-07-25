@@ -66,10 +66,21 @@ def test_result_counts_are_consistent():
 
 def test_cli_run_and_attest(tmp_path, capsys):
     out = tmp_path / "state.json"
-    code = main([
-        "run", "--ticks", "300", "--k", "8", "--seed", "3",
-        "--report-every", "0", "--out", str(out),
-    ])
+    code = main(
+        [
+            "run",
+            "--ticks",
+            "300",
+            "--k",
+            "8",
+            "--seed",
+            "3",
+            "--report-every",
+            "0",
+            "--out",
+            str(out),
+        ]
+    )
     assert code == 0
     assert out.exists()
     assert main(["attest", "--state", str(out)]) == 0
@@ -79,8 +90,21 @@ def test_cli_run_and_attest(tmp_path, capsys):
 
 def test_cli_resume(tmp_path, capsys):
     out = tmp_path / "state.json"
-    main(["run", "--ticks", "200", "--k", "8", "--seed", "3",
-          "--report-every", "0", "--out", str(out)])
+    main(
+        [
+            "run",
+            "--ticks",
+            "200",
+            "--k",
+            "8",
+            "--seed",
+            "3",
+            "--report-every",
+            "0",
+            "--out",
+            str(out),
+        ]
+    )
     code = main(["resume", "--state", str(out), "--ticks", "100", "--report-every", "0"])
     assert code == 0
     captured = capsys.readouterr()
@@ -89,9 +113,22 @@ def test_cli_resume(tmp_path, capsys):
 
 def test_cli_attest_rejects_tampered_file(tmp_path, capsys):
     out = tmp_path / "state.json"
-    main(["run", "--ticks", "100", "--k", "8", "--seed", "3",
-          "--report-every", "0", "--out", str(out)])
-    text = out.read_text().replace('"schema_version": 1', '"schema_version": 2')
+    main(
+        [
+            "run",
+            "--ticks",
+            "100",
+            "--k",
+            "8",
+            "--seed",
+            "3",
+            "--report-every",
+            "0",
+            "--out",
+            str(out),
+        ]
+    )
+    text = out.read_text().replace('"schema_version": 2', '"schema_version": 3')
     assert text != out.read_text(), "tamper target not found in state file"
     out.write_text(text)
     assert main(["attest", "--state", str(out)]) == 1

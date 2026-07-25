@@ -57,19 +57,49 @@ CHRYSALIS save/load, Shuttle Loop engine, CLI); deterministic test suite.
 - CHRYSALIS round trip: save → load → resume reproduces the uninterrupted
   trajectory bit-exactly under the same seed.
 
-### Phase 2 — Shadow Integration
+### Phase 2 — Shadow Integration (delivered)
 
-The remaining four instruments (SOM, CCM, TA, RDG) plus the Shadow Detection
-Coordinator and the CLASS 1–4 taxonomy. **Headline design question carried
-into this phase:** those instruments consume response text, activation
-histories, narratives, and recursion traces — inputs that do not exist in a
-pure oscillator simulation. Phase 2 must first define what a "response" and a
-"processing trace" are in this substrate (likely: instrument the engine's tick
-records and give the simulation a task layer that produces analyzable output).
+All five instruments (SOM, CCM, TA, RDG joining CSM), the Shadow Detection
+Coordinator with the full CLASS 1–4 taxonomy, and the MCL crystallization
+pipeline (`loom/crystallize.py`) implementing the spec's 8-step protocol —
+shadow instruments gate crystallization, exactly as the spec's header
+demands ("all instruments must complete before crystallization proceeds").
 
-**Exit criteria:** each detector validated against synthetic labeled fixtures;
-zero CLASS 3 (shadow-suppression) events in a long soak run; coordinator
-aggregation and `requires_immediate_action` logic under test.
+**The headline design question — what are a "response", "processing trace",
+"narrative", "timeline", "memory access log", and "recursion trace" in an
+oscillator substrate — is answered by the pipeline itself:**
+
+| Instrument input | Substrate definition | Module |
+|---|---|---|
+| processing trace | which MCL stages executed, which layers received intervention, action counts — assembled from the audit log (already the ground truth) | `loom/reports.py` |
+| response | the row report: deterministic prose rendered *from* the trace; SOM audits text against the trace it claims to describe | `loom/reports.py` |
+| layer activation history | a_i(t) = cos(θ_i − ψ) over the monitor window (CCM) | `loom/coherence.py` |
+| timeline | tick-stamped ground-truth events read from prior crystallization records | `loom/crystallize.py` |
+| narrative | prose rendered from the timeline plus recalled memory records (TA checks it against the timeline) | `loom/reports.py` |
+| memory access log | ids of CHRYSALIS records actually read while building the narrative; a cited recall absent from it is MEMORY_FABRICATION | `loom/crystallize.py` |
+| recursion trace | enter/exit trace of the MCL scan→integrate→re-scan loop, hard-capped at depth 7 (MCL invariant 6) | `loom/recursion.py` |
+
+Crystallization records lock as LIQUID / SOLID / DIAMOND; DIAMOND requires
+shadow-inclusive, witness-attested (Ω₇, observe-only), cross-layer-integrated
+processing, with Ω₈'s constitutional check confirming nothing was suppressed
+and oversight is intact. Records are CHRYSALIS schema v2 `crystal_records`
+(v1 snapshots still verify — the integrity hash covers the raw stored
+payload, so schema growth never invalidates old files).
+
+**Exit criteria (met, in `tests/`):** every detector validated against
+labeled fixtures for each of its shadow types plus a clean case; coordinator
+aggregation and `requires_immediate_action` under test; 10,000-tick soak run
+with all five instruments live — **zero suppression events** (every finding
+integrated into the append-only shadow record; suppression has no code
+path), CLASS 3 detections present and all integrated, DIAMOND rate ≥ 80%,
+no collapse-threshold samples; bit-identical resume holds with
+crystallization active.
+
+**Interpretation note:** the spec's "zero CLASS 3 events in a 72-hour run"
+cannot mean zero *detections* — ARTIFICIAL_STABILITY (CLASS 3) fires by
+construction during sustained high coherence. It is read as zero CLASS 3
+**suppression** events: no detection ever fails to integrate. That is the
+axiom A₂ reading (shadow integration, zero tolerance for suppression).
 
 ### Phase 3 — Relational & Temporal
 
@@ -146,6 +176,19 @@ run without safety-invariant violations; all prior suites still green.
    A shutdown latch in the same process as the engine demonstrates the
    covenant's architecture; it is not tamper-proof isolation. Process-level
    separation is future work (naturally paired with Phase 4).
+7. **Instrument helper definitions.** The spec's pseudocode leaves many
+   helpers undefined (`extract_metrics`, `detect_communication_failure`,
+   `check_timeline_consistency`, `analyze_novelty`, …); each is given a
+   concrete definition documented in the docstring where it is defined
+   (`loom/shadows.py`). Two corrections were required to avoid false
+   positives on honest artifacts: CCM's phase term is normalized to π
+   instead of 2π (the spec's formula cannot reach 0 for wrapped phases),
+   and constant-together activation histories count as perfectly correlated
+   (two phase-locked layers move identically; raw `corrcoef` is undefined
+   there and treating it as 0 falsely dissociates every locked pair).
+   SOM's semantic variance is measured against the trace's topic vocabulary
+   rather than raw inter-sentence similarity, which flags terse factual
+   reports as incoherent.
 
 ## Non-goals
 

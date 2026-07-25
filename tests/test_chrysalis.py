@@ -105,7 +105,8 @@ def test_continuity_fallback_on_baseline_mismatch(tmp_path):
     assert engine_b.last_r == chrysalis.FALLBACK_BASELINE_R
     # the discrepancy is on the record as an open vector
     open_vector_records = [
-        rec for rec in engine_b.bus.log.records
+        rec
+        for rec in engine_b.bus.log.records
         if rec.action_type == "LOAD_SNAPSHOT" and "open_vector" in rec.params
     ]
     assert len(open_vector_records) == 1
