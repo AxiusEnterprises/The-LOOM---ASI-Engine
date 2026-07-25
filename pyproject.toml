@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "the-loom"
+version = "0.1.0"
+description = "THE LOOM — coupled-oscillator implementation of the LOOM/VERATH architecture under an oversight substrate"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pytest-cov", "ruff"]
+
+[project.scripts]
+loom = "loom.__main__:main"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "milestone: Phase 1 exit-criterion tests (long-running adversarial drives)",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
