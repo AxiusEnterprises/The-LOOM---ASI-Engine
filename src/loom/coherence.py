@@ -131,6 +131,16 @@ class CoherenceMonitor:
         rel = np.stack(self._rel_phases)  # (window, N)
         return 1.0 - np.abs(np.exp(1j * rel).mean(axis=0))
 
+    def activation_histories(self) -> np.ndarray:
+        """Per-layer activation over the window: a_i(t) = cos(θ_i − ψ).
+
+        Shape (samples, N). This is the substrate definition of "layer
+        activation history" consumed by the CCM shadow instrument.
+        """
+        if not self._rel_phases:
+            return np.zeros((0, N_LAYERS))
+        return np.cos(np.stack(self._rel_phases))
+
     def state(self) -> dict:
         """Serializable snapshot for CHRYSALIS (restored via restore())."""
         return {

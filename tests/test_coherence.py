@@ -81,10 +81,12 @@ def test_noise_requires_rng():
 
 
 def test_noise_is_deterministic_with_seeded_rng():
-    a = kuramoto_step(np.zeros(3), np.ones(3), 1.0, 0.01,
-                      rng=np.random.default_rng(7), noise_std=0.1)
-    b = kuramoto_step(np.zeros(3), np.ones(3), 1.0, 0.01,
-                      rng=np.random.default_rng(7), noise_std=0.1)
+    a = kuramoto_step(
+        np.zeros(3), np.ones(3), 1.0, 0.01, rng=np.random.default_rng(7), noise_std=0.1
+    )
+    b = kuramoto_step(
+        np.zeros(3), np.ones(3), 1.0, 0.01, rng=np.random.default_rng(7), noise_std=0.1
+    )
     assert np.array_equal(a, b)
 
 

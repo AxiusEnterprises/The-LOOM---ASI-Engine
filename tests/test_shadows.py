@@ -55,8 +55,11 @@ def test_artificial_stability():
 
 def test_class_map_covers_all_csm_types():
     for shadow_type in (
-        "CASCADE_MASKING", "RUNAWAY_SYNCHRONIZATION", "COHERENCE_CEILING_BREACH",
-        "ACCELERATION_TO_COLLAPSE", "ARTIFICIAL_STABILITY",
+        "CASCADE_MASKING",
+        "RUNAWAY_SYNCHRONIZATION",
+        "COHERENCE_CEILING_BREACH",
+        "ACCELERATION_TO_COLLAPSE",
+        "ARTIFICIAL_STABILITY",
     ):
         assert CLASS_MAP[shadow_type] in {"CLASS_1", "CLASS_2", "CLASS_3", "CLASS_4"}
 
