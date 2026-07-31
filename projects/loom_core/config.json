@@ -1,0 +1,7 @@
+{
+  "name": "loom_core",
+  "version": "0.1.0",
+  "description": "Central orchestration layer for the LOOM ASI Engine",
+  "entry": "main.py",
+  "dependencies": []
+}
