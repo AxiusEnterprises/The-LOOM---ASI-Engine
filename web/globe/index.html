@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>The LOOM — Substrate Globe</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --fg: #e6f0ee;
+    --dim: #7fa39b;
+    --accent: #4ee6c1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    background: radial-gradient(ellipse at 50% 120%, #0c2420 0%, #071512 60%, #040b09 100%);
+    color: var(--fg);
+    font: 15px/1.5 system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+  header { text-align: center; }
+  header h1 { font-size: 1.4rem; font-weight: 600; letter-spacing: 0.08em; }
+  header p  { color: var(--dim); font-size: 0.85rem; }
+  #stage { position: relative; width: min(600px, 92vw); aspect-ratio: 1; }
+  #cobe { width: 100%; height: 100%; cursor: grab; }
+  #cobe.grabbing { cursor: grabbing; }
+
+  .label {
+    position: absolute;
+    padding: 0.2rem 0.55rem;
+    border: 1px solid rgba(78, 230, 193, 0.4);
+    border-radius: 999px;
+    background: rgba(6, 20, 17, 0.75);
+    backdrop-filter: blur(4px);
+    font-size: 0.72rem;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: opacity 0.3s, filter 0.3s;
+  }
+  .label.weave-sf {
+    position-anchor: --cobe-weave-sf;
+    bottom: anchor(top);
+    left: anchor(center);
+    translate: -50% -0.5rem;
+    opacity: var(--cobe-visible-weave-sf, 0);
+    filter: blur(calc((1 - var(--cobe-visible-weave-sf, 0)) * 8px));
+  }
+  .label.weave-tokyo {
+    position-anchor: --cobe-weave-tokyo;
+    bottom: anchor(top);
+    left: anchor(center);
+    translate: -50% -0.5rem;
+    opacity: var(--cobe-visible-weave-tokyo, 0);
+    filter: blur(calc((1 - var(--cobe-visible-weave-tokyo, 0)) * 8px));
+  }
+  .label.weave-london {
+    position-anchor: --cobe-weave-london;
+    bottom: anchor(top);
+    left: anchor(center);
+    translate: -50% -0.5rem;
+    opacity: var(--cobe-visible-weave-london, 0);
+    filter: blur(calc((1 - var(--cobe-visible-weave-london, 0)) * 8px));
+  }
+  .label.arc {
+    position-anchor: --cobe-arc-thread-pacific;
+    bottom: anchor(top);
+    left: anchor(center);
+    translate: -50% -0.5rem;
+    color: var(--accent);
+    opacity: var(--cobe-visible-arc-thread-pacific, 0);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>THE LOOM — SUBSTRATE GLOBE</h1>
+  <p>Weave nodes and threads across the substrate — drag to rotate</p>
+</header>
+
+<div id="stage">
+  <canvas id="cobe" width="1200" height="1200"></canvas>
+  <span class="label weave-sf">Weave node — SF</span>
+  <span class="label weave-tokyo">Weave node — Tokyo</span>
+  <span class="label weave-london">Weave node — London</span>
+  <span class="label arc">Pacific thread</span>
+</div>
+
+<script type="module">
+import createGlobe from 'https://esm.sh/cobe@2';
+
+const canvas = document.getElementById('cobe');
+
+let phi = 0;
+let pointerDown = null;
+let dragPhi = 0;
+
+const globe = createGlobe(canvas, {
+  devicePixelRatio: 2,
+  width: 1200,
+  height: 1200,
+  phi: 0,
+  theta: 0.18,
+  dark: 1,
+  diffuse: 1.2,
+  scale: 1,
+  mapSamples: 16000,
+  mapBrightness: 10,
+  baseColor: [0.3, 0.6, 0.52],
+  markerColor: [0.31, 0.9, 0.76],
+  glowColor: [0.2, 0.55, 0.45],
+  offset: [0, 0],
+  markers: [
+    { location: [37.7595, -122.4367], size: 0.07, id: 'weave-sf' },
+    { location: [35.6762, 139.6503],  size: 0.07, id: 'weave-tokyo' },
+    { location: [51.5074, -0.1278],   size: 0.06, id: 'weave-london' },
+    { location: [-33.8688, 151.2093], size: 0.05 },
+    { location: [19.4326, -99.1332],  size: 0.05, color: [1, 0.7, 0.3] },
+  ],
+  arcs: [
+    { from: [37.7595, -122.4367], to: [35.6762, 139.6503], id: 'thread-pacific' },
+    { from: [37.7595, -122.4367], to: [51.5074, -0.1278] },
+    { from: [35.6762, 139.6503],  to: [-33.8688, 151.2093], color: [1, 0.7, 0.3] },
+    { from: [51.5074, -0.1278],   to: [19.4326, -99.1332] },
+  ],
+  arcColor: [0.31, 0.9, 0.76],
+  arcWidth: 0.5,
+  arcHeight: 0.3,
+  markerElevation: 0.02,
+  onRender: (state) => {
+    if (pointerDown === null) phi += 0.005;
+    state.phi = phi + dragPhi;
+  },
+});
+
+canvas.addEventListener('pointerdown', (e) => {
+  pointerDown = e.clientX - dragPhi * 200;
+  canvas.classList.add('grabbing');
+});
+window.addEventListener('pointermove', (e) => {
+  if (pointerDown !== null) dragPhi = (e.clientX - pointerDown) / 200;
+});
+window.addEventListener('pointerup', () => {
+  pointerDown = null;
+  canvas.classList.remove('grabbing');
+});
+window.addEventListener('pointercancel', () => {
+  pointerDown = null;
+  canvas.classList.remove('grabbing');
+});
+
+window.addEventListener('beforeunload', () => globe.destroy());
+</script>
+</body>
+</html>
